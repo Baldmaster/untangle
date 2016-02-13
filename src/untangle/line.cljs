@@ -1,7 +1,7 @@
 (ns untangle.line
   (:require [untangle.protocols :as prot :refer [Draw draw]]))
 
-(defrecord Line [start end thikness]
+(defrecord Line [start end thickness]
   Draw
   (draw [this ctx]
     (let [{x1 :x, y1 :y} start

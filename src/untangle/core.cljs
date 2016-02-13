@@ -3,14 +3,14 @@
             [untangle.circle :as circle :refer [Circle]]
             [untangle.line :as line :refer [Line]]
             [untangle.levels :as levels :refer [levels]]
+            [untangle.intersection :as intersection
+             :refer [detect-intersections]]
             [untangle.protocols :as prot :refer [draw]]))
 
 (enable-console-print!)
 
-;;(def Circle circle/Circle)
-
 (defonce circle-radius 10)
-(defonce line-thickness 3)
+(defonce line-thickness 2)
 
 (defn canvas []
   [:canvas#game {:width 800
@@ -60,15 +60,15 @@
         lines (-> (map
                    (fn [[k adj]]
                      (map
-                      #(Line. (%1 circles) (%2 circles) 4) (repeat k) adj))
+                      #(Line. (%1 circles) (%2 circles) 2) (repeat k) adj))
                    adjacent)
                   (flatten))]
     (.clearRect ctx 0 0 width height)
-    (doseq [line lines]
+    (doseq [line (detect-intersections lines :thickness 7)]
       (draw line ctx))
     (doseq [point points]
       (draw point ctx))))
-  
+
   
 (defn game []
   (let [canvas (. js/document (getElementById "game"))
