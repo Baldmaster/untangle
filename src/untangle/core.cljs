@@ -2,11 +2,10 @@
   (:require [reagent.core :as reagent :refer [atom]]
             [untangle.circle :as circle :refer [Circle]]
             [untangle.line :as line :refer [Line]]
+            [untangle.levels :as levels :refer [levels]]
             [untangle.protocols :as prot :refer [draw]]))
 
 (enable-console-print!)
-
-(println "Edits to this text should show up in your developer console.")
 
 ;;(def Circle circle/Circle)
 
@@ -23,79 +22,73 @@
         y (rand-int height)]
     (Circle. x y circle-radius)))
 
-(defn connect-points [points]
-  (letfn [(new-line [start end]
-            (Line. start end line-thickness))]
-    (loop [[head & tail] points acc []]
-      (if (empty? tail)
-        acc
-        (recur tail (concat acc (map new-line (repeat head) tail)))))))
-
 (defn draw-lines [lines ctx]
   (doseq [line lines]
     (draw line ctx)))
 
-(defn circle-selected?
-  [movable steady]
+(defn circle-select-handler
+  [movable level]
   (fn [event]
     (let [lx (.-layerX event)
           ly (.-layerY event)
-          selected-circle (->> @steady
+          selected-circle (->> (:circles @level)
                                (filter (fn [circle]
-                                        (let [{:keys [x y radius]} circle]
+                                        (let [[k {:keys [x y radius]}] circle]
                                           (< (+ (Math/pow (- lx x) 2) 
                                                 (Math/pow (- ly y) 2))
                                              (Math/pow radius 2)))))
                                (first))]
-      (do
-        (reset! movable selected-circle)
-        (reset! steady (filter #(not (= % selected-circle)) @steady))))))
-
-(defn set-state! [movable steady]
-  (fn [event]
-    (let [circles (if (nil? @movable)
-                    @steady
-                    (cons @movable @steady))]
-      (reset! steady circles)
-      (reset! movable nil))))
-
-(defn drag-circle! [movable event]
-    (let [lx (.-layerX event)
-          ly (.-layerY event)
-          {:keys [x y radius]} @movable]
-      (reset! movable (Circle. lx ly radius))))
+      (when-not (nil? selected-circle)
+        (reset! movable (first selected-circle))))))
           
 (defn drag-handler
-  [movable steady ctx width height]
+  [^Atom movable ^Atom level ctx width height]
   (fn [event]
     (when-not (nil? @movable)
-      (drag-circle! movable event)
-      (let [circles (cons @movable @steady)
-            lines (connect-points circles)]
-        (.clearRect ctx 0 0 width height)
-        (doseq [line lines]
-          (draw line ctx))
-        (doseq [circle circles]
-          (draw circle ctx))))))
+      (let [lx (.-layerX event)
+            ly (.-layerY event)
+            k @movable]
+        (swap! level assoc-in [:circles k :x] lx)
+        (swap! level assoc-in [:circles k :y] ly)))))
 
+
+(defn render
+  "state = derefed atom"
+  [state ctx width height]
+  (let [{:keys [circles adjacent]} state
+        points (vals circles)
+        lines (-> (map
+                   (fn [[k adj]]
+                     (map
+                      #(Line. (%1 circles) (%2 circles) 4) (repeat k) adj))
+                   adjacent)
+                  (flatten))]
+    (.clearRect ctx 0 0 width height)
+    (doseq [line lines]
+      (draw line ctx))
+    (doseq [point points]
+      (draw point ctx))))
+  
+  
 (defn game []
   (let [canvas (. js/document (getElementById "game"))
         ctx (.getContext canvas "2d")
         width (.-width canvas)
         height (.-height canvas)
-        circles (take 5 (repeatedly #(random-circle width height)))
         movable-circle (atom nil)
-        steady-circles (atom circles)]
-    (.addEventListener canvas "mousedown" (circle-selected? movable-circle steady-circles))
+        level (atom (:1 levels))]
+    (add-watch level :level-watcher
+               (fn [_ _ _ state]
+                 (render state ctx width height)))
+                       
+                                      
+    (.addEventListener canvas "mousedown" (circle-select-handler movable-circle level))
     (.addEventListener canvas "mousemove" (drag-handler
                                            movable-circle
-                                           steady-circles
+                                           level
                                            ctx width height))
-    (.addEventListener canvas "mouseup" (set-state! movable-circle steady-circles))
-    (doseq [line (connect-points circles)]
-      (draw line ctx))
-    (doseq [circle circles]
-      (draw circle ctx))))
+    (.addEventListener canvas "mouseup" ((fn [m] #(reset! m nil)) movable-circle))
+    (render @level ctx width height)))
 
 
 (defn game-component []
