@@ -11,10 +11,6 @@
 
 (enable-console-print!)
 
-(defn canvas []
-  [:canvas#game {:width 800
-                 :height 480}])
-
 (defn circle-select-handler
   [movable level]
   (fn [event]
@@ -106,11 +102,19 @@
     (render @level ctx width height)))
 
 
+(defn canvas []
+  [:canvas#game {:width 800
+                 :height 480}])
+
 (defn game-component []
   (reagent/create-class {:component-did-mount game
                          :reagent-render canvas}))
 
-(reagent/render-component [game-component]
+(defn game-container []
+  [:div#game-container
+   [game-component]])
+
+(reagent/render-component [game-container]
                           (. js/document (getElementById "app")))
 
 

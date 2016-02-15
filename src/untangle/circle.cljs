@@ -7,7 +7,7 @@
   (prot/draw [this ctx]
     (do
       (-> (.-fillStyle ctx)
-          (set! "gold"))
+          (set! "#FFFF66"))
       (.beginPath ctx)
       (. ctx (arc x y radius 0 (* Math/PI 2) true))
       (.closePath ctx)

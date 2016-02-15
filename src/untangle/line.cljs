@@ -11,6 +11,6 @@
         (. ctx (moveTo x1 y1))
         (. ctx (lineTo x2 y2))
         (set! (.-lineWidth ctx) thickness)
-        (set! (.-strokeStyle ctx) "#cfc")
+        (set! (.-strokeStyle ctx) "#6633FF")
         (.stroke ctx)))))
   
