@@ -3,14 +3,13 @@
             [untangle.circle :as circle :refer [Circle]]
             [untangle.line :as line :refer [Line]]
             [untangle.levels :as levels :refer [levels]]
+            [untangle.constants :as consts
+             :refer [circle-radius line-thickness intersect-thickness]]
             [untangle.intersection :as intersection
              :refer [detect-intersections]]
             [untangle.protocols :as prot :refer [draw]]))
 
 (enable-console-print!)
-
-(defonce circle-radius 10)
-(defonce line-thickness 2)
 
 (defn canvas []
   [:canvas#game {:width 800
@@ -47,15 +46,15 @@
     (when-not (nil? @movable)
       (let [lx (.-layerX event)
             ly (.-layerY event)
-            k @movable]
-        (swap! level assoc-in [:circles k :x] lx)
-        (swap! level assoc-in [:circles k :y] ly)))))
+            k @movable
+            c (assoc (-> @level
+                         (:circles)
+                         (k)) :x lx :y ly)]
+        (swap! level assoc-in [:circles k] c)))))
 
-
-(defn render
-  "state = derefed atom"
-  [state ctx width height]
-  (let [{:keys [circles adjacent]} state
+(defn compute-elements
+  [level]
+  (let [{:keys [circles adjacent]} level
         points (vals circles)
         lines (-> (map
                    (fn [[k adj]]
@@ -63,12 +62,17 @@
                       #(Line. (%1 circles) (%2 circles) 2) (repeat k) adj))
                    adjacent)
                   (flatten))]
+    [points lines]))
+
+(defn render
+  "state = derefed atom"
+  [state ctx width height]
+  (let [[points lines] (compute-elements state)]
     (.clearRect ctx 0 0 width height)
-    (doseq [line (detect-intersections lines :thickness 7)]
+    (doseq [line (detect-intersections lines :thickness intersect-thickness)]
       (draw line ctx))
     (doseq [point points]
       (draw point ctx))))
-
   
 (defn game []
   (let [canvas (. js/document (getElementById "game"))
