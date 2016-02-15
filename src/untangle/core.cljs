@@ -64,6 +64,12 @@
                   (flatten))]
     [points lines]))
 
+(defn solved-level?
+  [level]
+  (let [[_ lines] (compute-elements level)]
+    (->> (detect-intersections lines :thickness intersect-thickness)
+         (not-any? #(= intersect-thickness (:thickness %))))))
+
 (defn render
   "state = derefed atom"
   [state ctx width height]
@@ -73,25 +79,42 @@
       (draw line ctx))
     (doseq [point points]
       (draw point ctx))))
+
+
   
 (defn game []
   (let [canvas (. js/document (getElementById "game"))
         ctx (.getContext canvas "2d")
         width (.-width canvas)
         height (.-height canvas)
+        curr-level (atom 1)
         movable-circle (atom nil)
         level (atom (:1 levels))]
+    
+    (add-watch curr-level :curr-level-number
+               (fn [_ _ _ new-value]
+                 (let [lc (keyword (str (count levels)))
+                       next (keyword (str new-value))]
+                   (reset! level (or (next levels)
+                                     (lc levels))))))
+                      
     (add-watch level :level-watcher
                (fn [_ _ _ state]
                  (render state ctx width height)))
-                       
-                                      
-    (.addEventListener canvas "mousedown" (circle-select-handler movable-circle level))
+                                                         
+    (.addEventListener canvas "mousedown" (circle-select-handler
+                                           movable-circle level))
+    
     (.addEventListener canvas "mousemove" (drag-handler
                                            movable-circle
                                            level
                                            ctx width height))
-    (.addEventListener canvas "mouseup" ((fn [m] #(reset! m nil)) movable-circle))
+    
+    (.addEventListener canvas "mouseup" ((fn [m l]
+                                           (fn []
+                                             (reset! m nil)
+                                             (if (solved-level? @l)
+                                               (swap! curr-level inc)))) movable-circle level))
     (render @level ctx width height)))
 
 
