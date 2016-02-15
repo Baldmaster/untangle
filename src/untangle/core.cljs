@@ -13,17 +13,7 @@
 
 (defn canvas []
   [:canvas#game {:width 800
-                 :height 480
-                 :padding-left 20}])
-
-(defn random-circle [width height]
-  (let [x (rand-int width)
-        y (rand-int height)]
-    (Circle. x y circle-radius)))
-
-(defn draw-lines [lines ctx]
-  (doseq [line lines]
-    (draw line ctx)))
+                 :height 480}])
 
 (defn circle-select-handler
   [movable level]
@@ -80,8 +70,6 @@
     (doseq [point points]
       (draw point ctx))))
 
-
-  
 (defn game []
   (let [canvas (. js/document (getElementById "game"))
         ctx (.getContext canvas "2d")
@@ -93,8 +81,8 @@
     
     (add-watch curr-level :curr-level-number
                (fn [_ _ _ new-value]
-                 (let [lc (keyword (str (count levels)))
-                       next (keyword (str new-value))]
+                 (let [lc   (-> (count levels) (str) (keyword))
+                       next (-> (str new-value) (keyword))]
                    (reset! level (or (next levels)
                                      (lc levels))))))
                       
