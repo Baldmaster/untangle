@@ -58,7 +58,7 @@
          (not-any? #(= intersect-thickness (:thickness %))))))
 
 (defn render
-  "state = derefed atom"
+  "Render current level state on canvas"
   [state ctx width height]
   (let [[points lines] (compute-elements state)]
     (.clearRect ctx 0 0 width height)

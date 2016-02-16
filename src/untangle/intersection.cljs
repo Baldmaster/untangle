@@ -1,6 +1,4 @@
-;;Obviously, the bottleneck is here
 (ns untangle.intersection)
-
 
 (defn line-coefficients
   [{:keys [start end]}]
@@ -19,7 +17,6 @@
             (and (< x2 x) (< x x1)))
         (or (and (< y1 y) (< y y2))
             (and (< y2 y) (< y y1))))))
-
 
 (defn intersect?
   [l1 l2]
