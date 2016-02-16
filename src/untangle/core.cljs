@@ -11,6 +11,7 @@
 
 (enable-console-print!)
 
+
 (defn circle-select-handler
   [movable level]
   (fn [event]
@@ -116,10 +117,3 @@
 
 (reagent/render-component [game-container]
                           (. js/document (getElementById "app")))
-
-
-(defn on-js-reload []
-  ;; optionally touch your app-state to force rerendering depending on
-  ;; your application
-  ;; (swap! app-state update-in [:__figwheel_counter] inc)
-)
