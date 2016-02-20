@@ -22,3 +22,45 @@
                :1 [:3 :4 :5]
                :2 [:5 :4]
                :3 [:5]}}})
+
+
+
+(defn random-ball
+  [width height]
+  (let [x (rand-int width)
+        y (rand-int height)]
+    (Circle. x y circle-radius)))
+
+(defn compute-adjacent
+  [[outer inner]]
+  (let [[b1 b2 b3] (condp = (count inner)
+                     1 (replicate 3 (first inner))
+                     2 (cons (first inner) inner)
+                     3 inner)
+        [a1 a2 a3] outer]
+    {a1 [a2 a3 b1]
+     a2 [a3 b2]
+     a3 [b3]}))
+
+
+(defn build-level
+  [n width height]
+  (let [v (+ 3 n)
+        split3 (partial partition 3)
+        to-pairs (partial partition 2 1)
+        remainder (rem v 3)
+        idxs (->> (take v (iterate inc 1))
+                  (map #(keyword (str %))))
+        groups (-> (split3 idxs)
+                   (vec)
+                   (conj (take-last remainder idxs))
+                   (#(remove nil? %))
+                   (to-pairs))]
+    (loop [[head & tail] groups adj {}]
+      (if (empty? head)
+        (do
+          (println "done")
+        {:circles (reduce #(assoc %1 %2 (random-ball width height)) {} idxs)
+         :adjacent adj})
+        (let [adjacent (compute-adjacent head)]
+          (recur tail (merge adj adjacent)))))))

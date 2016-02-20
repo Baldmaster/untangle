@@ -2,7 +2,7 @@
   (:require [reagent.core :as reagent :refer [atom]]
             [untangle.circle :as circle :refer [Circle]]
             [untangle.line :as line :refer [Line]]
-            [untangle.levels :as levels :refer [levels]]
+            [untangle.levels :as levels :refer [levels build-level]]
             [untangle.constants :as consts
              :refer [circle-radius line-thickness intersect-thickness]]
             [untangle.intersection :as intersection
@@ -28,7 +28,7 @@
         (reset! movable (first selected-circle))))))
           
 (defn drag-handler
-  [^Atom movable ^Atom level ctx width height]
+  [^Atom movable ^Atom level]
   (fn [event]
     (when-not (nil? @movable)
       (let [lx (.-layerX event)
@@ -40,6 +40,7 @@
         (swap! level assoc-in [:circles k] c)))))
 
 (defn compute-elements
+  ;; Compute lines and circles"
   [level]
   (let [{:keys [circles adjacent]} level
         points (vals circles)
@@ -74,32 +75,34 @@
         height (.-height canvas)
         curr-level (atom 1)
         movable-circle (atom nil)
-        level (atom (:1 levels))]
-    
+        level (atom (build-level 1 width height))]
+
+    ;; State atoms' watchers
     (add-watch curr-level :curr-level-number
                (fn [_ _ _ new-value]
                  (let [lc   (-> (count levels) (str) (keyword))
                        next (-> (str new-value) (keyword))]
-                   (reset! level (or (next levels)
-                                     (lc levels))))))
+                   (reset! level (build-level new-value width height)))))
                       
     (add-watch level :level-watcher
                (fn [_ _ _ state]
                  (render state ctx width height)))
-                                                         
-    (.addEventListener canvas "mousedown" (circle-select-handler
-                                           movable-circle level))
+
+    ;; Canvas event listeners
+    (.addEventListener canvas "mousedown"
+                       (circle-select-handler movable-circle level))
     
-    (.addEventListener canvas "mousemove" (drag-handler
-                                           movable-circle
-                                           level
-                                           ctx width height))
+    (.addEventListener canvas "mousemove"
+                       (drag-handler movable-circle level))
     
-    (.addEventListener canvas "mouseup" ((fn [m l]
-                                           (fn []
-                                             (reset! m nil)
-                                             (if (solved-level? @l)
-                                               (swap! curr-level inc)))) movable-circle level))
+    (.addEventListener canvas "mouseup"
+                       ((fn [m l]
+                          (fn []
+                            (reset! m nil)
+                            (if (solved-level? @l)
+                              (swap! curr-level inc)))) movable-circle level))
+
+    ;; Initial rendering
     (render @level ctx width height)))
 
 
