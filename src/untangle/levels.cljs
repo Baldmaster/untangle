@@ -3,27 +3,6 @@
             [untangle.constants :as consts
              :refer [circle-radius]]))
 
-(def levels
-  {:1 
-   {:circles {:0 (Circle. 50 40 circle-radius)
-              :1 (Circle. 400 70 circle-radius)
-              :2 (Circle. 500 400 circle-radius)
-              :3 (Circle. 80 350 circle-radius)}
-    :adjacent {:0 [:2 :3]
-               :1 [:2 :3]}}
-   :2
-   {:circles {:0 (Circle. 400 90 circle-radius)
-              :1 (Circle. 550 140 circle-radius)
-              :2 (Circle. 550 240 circle-radius)
-              :3 (Circle. 400 290 circle-radius)
-              :4 (Circle. 250 240 circle-radius)
-              :5 (Circle. 250 140 circle-radius)}
-    :adjacent {:0 [:2 :4]
-               :1 [:3 :4 :5]
-               :2 [:5 :4]
-               :3 [:5]}}})
-
-
 
 (defn random-ball
   [width height]
@@ -42,7 +21,34 @@
      a2 [a3 b2]
      a3 [b3]}))
 
+(defn deg-to-rad
+  [deg]
+  (* (/ Math/PI 180) deg))
 
+(defn cos [n] (Math/cos n))
+(defn sin [n] (Math/sin n))
+(defn floor [n] (Math/floor n))
+
+(defn compute-coords
+  [x0 y0 r deg]
+  (let [angle (deg-to-rad deg)
+        x (+ x0 (floor (* r (cos angle))))
+        y (+ y0 (floor (* r (sin angle))))]
+    [x y]))
+
+(defn compute-points
+  [idxs width height]
+  (let [[x0 y0] [(floor (/ width 2)) (floor (/ height 2))]
+        r (- (min x0 y0) 50)
+        n (count idxs)
+        step (floor (/ 360 n))
+        steps (take n (iterate #(+ step %) 0))
+        comp-coords (partial compute-coords x0 y0 r)
+        coords (map comp-coords steps)]
+    (println x0 y0)
+  (map (fn [idx [x y]]
+         {idx (Circle. x y circle-radius)}) (shuffle idxs) coords)))
+  
 (defn build-level
   [n width height]
   (let [v (+ 3 n)
@@ -58,9 +64,13 @@
                    (to-pairs))]
     (loop [[head & tail] groups adj {}]
       (if (empty? head)
-        (do
-          (println "done")
-        {:circles (reduce #(assoc %1 %2 (random-ball width height)) {} idxs)
-         :adjacent adj})
+        (let [lst (second (last groups))
+              adj' (condp = (count lst)
+                         1 {}
+                         2 {(first lst) [(second lst)]}
+                         3 {(first lst) [(second lst) (last lst)]
+                            (second lst) [(last lst)]})]
+        {:circles (apply merge (compute-points idxs width height))
+         :adjacent (merge adj adj')})
         (let [adjacent (compute-adjacent head)]
           (recur tail (merge adj adjacent)))))))
