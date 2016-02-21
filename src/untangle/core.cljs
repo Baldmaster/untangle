@@ -2,7 +2,7 @@
   (:require [reagent.core :as reagent :refer [atom]]
             [untangle.circle :as circle :refer [Circle]]
             [untangle.line :as line :refer [Line]]
-            [untangle.levels :as levels :refer [levels build-level]]
+            [untangle.levels :as levels :refer [build-level]]
             [untangle.constants :as consts
              :refer [circle-radius line-thickness intersect-thickness]]
             [untangle.intersection :as intersection
@@ -80,9 +80,7 @@
     ;; State atoms' watchers
     (add-watch curr-level :curr-level-number
                (fn [_ _ _ new-value]
-                 (let [lc   (-> (count levels) (str) (keyword))
-                       next (-> (str new-value) (keyword))]
-                   (reset! level (build-level new-value width height)))))
+                   (reset! level (build-level new-value width height))))
                       
     (add-watch level :level-watcher
                (fn [_ _ _ state]
