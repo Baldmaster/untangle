@@ -4,7 +4,7 @@ Untangle puzzle game.
 Current state
 ----
 
-Only two levels at the moment. Some design improvement needed, frontend is not my strong suit (at least now).
+Some design improvement needed, frontend is not my strong suit (at least now).
 
 Compile
 ----
@@ -20,6 +20,5 @@ TODO
 * Design improvement
 * Start screen
 * Help menu
-* More levels
 * Sounds
 * etc.
