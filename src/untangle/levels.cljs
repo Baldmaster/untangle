@@ -4,12 +4,6 @@
              :refer [circle-radius]]))
 
 
-(defn random-ball
-  [width height]
-  (let [x (rand-int width)
-        y (rand-int height)]
-    (Circle. x y circle-radius)))
-
 (defn compute-adjacent
   [[outer inner]]
   (let [[b1 b2 b3] (condp = (count inner)
@@ -45,7 +39,6 @@
         steps (take n (iterate #(+ step %) 0))
         comp-coords (partial compute-coords x0 y0 r)
         coords (map comp-coords steps)]
-    (println x0 y0)
   (map (fn [idx [x y]]
          {idx (Circle. x y circle-radius)}) (shuffle idxs) coords)))
   
