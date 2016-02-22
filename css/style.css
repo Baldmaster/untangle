@@ -1,0 +1,13 @@
+/* some style */
+
+#game-container {
+    width: 800px;
+    margin: 0 auto;
+}
+
+canvas#game {
+    position: relative;
+    background: #75bbfd;
+    border: 1px solid black;
+}
+
