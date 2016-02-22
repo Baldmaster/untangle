@@ -6,6 +6,8 @@ Current state
 
 Some design improvement needed, frontend is not my strong suit (at least now).
 
+Play it [here](http://baldmaster.github.io/untangle/)
+
 Compile
 ----
 
