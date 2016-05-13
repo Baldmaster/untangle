@@ -17,56 +17,40 @@
   (fn [event]
     (let [lx (.-layerX event)
           ly (.-layerY event)
-          selected-circle (->> (:circles @level)
+          selected-circle (->> (:points @level)
                                (filter (fn [circle]
-                                        (let [[k {:keys [x y radius]}] circle]
+                                         (let [{:keys [x y radius]} @circle]
                                           (< (+ (Math/pow (- lx x) 2) 
                                                 (Math/pow (- ly y) 2))
                                              (Math/pow radius 2)))))
                                (first))]
       (when-not (nil? selected-circle)
-        (reset! movable (first selected-circle))))))
+        (reset! movable selected-circle)))))
           
 (defn drag-handler
   [^Atom movable ^Atom level]
   (fn [event]
     (when-not (nil? @movable)
       (let [lx (.-layerX event)
-            ly (.-layerY event)
-            k @movable
-            c (assoc (-> @level
-                         (:circles)
-                         (k)) :x lx :y ly)]
-        (swap! level assoc-in [:circles k] c)))))
-
-(defn compute-elements
-  ;; Compute lines and circles"
-  [level]
-  (let [{:keys [circles adjacent]} level
-        points (vals circles)
-        lines (-> (map
-                   (fn [[k adj]]
-                     (map
-                      #(Line. (%1 circles) (%2 circles) 2) (repeat k) adj))
-                   adjacent)
-                  (flatten))]
-    [points lines]))
+            ly (.-layerY event)]
+        (swap! @movable assoc :x lx :y ly)
+        (swap! level identity)))))
 
 (defn solved-level?
   [level]
-  (let [[_ lines] (compute-elements level)]
+  (let [{:keys [lines]} level]
     (->> (detect-intersections lines :thickness intersect-thickness)
          (not-any? #(= intersect-thickness (:thickness %))))))
 
 (defn render
   "Render current level state on canvas"
   [state ctx width height]
-  (let [[points lines] (compute-elements state)]
+  (let [{:keys [points lines]} state]
     (.clearRect ctx 0 0 width height)
     (doseq [line (detect-intersections lines :thickness intersect-thickness)]
       (draw line ctx))
     (doseq [point points]
-      (draw point ctx))))
+      (draw @point ctx))))
 
 (defn game []
   (let [canvas (. js/document (getElementById "game"))

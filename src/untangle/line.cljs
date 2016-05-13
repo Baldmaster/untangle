@@ -4,8 +4,8 @@
 (defrecord Line [start end thickness]
   Draw
   (draw [this ctx]
-    (let [{x1 :x, y1 :y} start
-          {x2 :x, y2 :y} end]
+    (let [{x1 :x, y1 :y} @start
+          {x2 :x, y2 :y} @end]
       (do
         (.beginPath ctx)
         (. ctx (moveTo x1 y1))

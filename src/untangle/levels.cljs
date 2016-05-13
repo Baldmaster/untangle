@@ -1,5 +1,6 @@
 (ns untangle.levels
   (:require [untangle.circle :as circle :refer [Circle]]
+            [untangle.line :as line :refer [Line]]
             [untangle.constants :as consts
              :refer [circle-radius]]))
 
@@ -10,7 +11,10 @@
                      1 (replicate 3 (first inner))
                      2 (cons (first inner) inner)
                      3 inner)
-        [a1 a2 a3] outer]
+        [a1 a2 a3] outer
+        r1 (+ 2 (rand-int 2))
+        r2 (if (= 3 r1) 1 2)
+        r3 (if (= 3 r1) (rand-int 2) 1)]
     {a1 [a2 a3 b1]
      a2 [a3 b2]
      a3 [b3]}))
@@ -30,7 +34,7 @@
         y (+ y0 (floor (* r (sin angle))))]
     [x y]))
 
-(defn compute-points
+(defn initiate-points
   [idxs width height]
   (let [[x0 y0] [(floor (/ width 2)) (floor (/ height 2))]
         r (- (min x0 y0) 50)
@@ -40,7 +44,18 @@
         comp-coords (partial compute-coords x0 y0 r)
         coords (map comp-coords steps)]
   (map (fn [idx [x y]]
-         {idx (Circle. x y circle-radius)}) (shuffle idxs) coords)))
+         {idx (atom (Circle. x y circle-radius))}) (shuffle idxs) coords)))
+
+
+
+(defn initiate-lines
+  [adj-map points]
+  (-> (map (fn [[start adjacent]]
+             (map
+              #(Line. (%1 points) (%2 points) 2) (repeat start) adjacent))
+           adj-map)
+      (flatten)))
+
   
 (defn build-level
   [n width height]
@@ -62,8 +77,10 @@
                          1 {}
                          2 {(first lst) [(second lst)]}
                          3 {(first lst) [(second lst) (last lst)]
-                            (second lst) [(last lst)]})]
-        {:circles (apply merge (compute-points idxs width height))
-         :adjacent (merge adj adj')})
+                            (second lst) [(last lst)]})
+              points (apply merge (initiate-points idxs width height))
+              lines (initiate-lines (merge adj adj') points)]
+          {:points (vals points)
+           :lines  lines})
         (let [adjacent (compute-adjacent head)]
           (recur tail (merge adj adjacent)))))))
